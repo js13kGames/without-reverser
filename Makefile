@@ -1,7 +1,8 @@
 default: compile
 
 compile:
-	traceur --script src/*.js --out out/js13kgames-2015.js
+	mkdir -p out
+	babel src/*.js -o out/js13kgames-2015.js
 	uglifyjs --compress --mangle -- out/js13kgames-2015.js > out/js13kgames-2015.min.js
 	rm out/js13kgames-2015.js
 	cp -f src/*.{html,css} out/
