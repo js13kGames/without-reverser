@@ -1,8 +1,11 @@
+import random_number from './helpers';
+
 class Engine {
     constructor() {
         this.ticks = 0;
         this.resources = {
-            dust: 0
+            dust: 0,
+            crystals: 0
         }
     }
 
@@ -27,8 +30,15 @@ class Player {
     }
 }
 
+class Asteroid {
+    mine_resource() {
+        console.log(random_number(2, 10));
+    }
+}
+
 var engine = new Engine();
 var player = new Player(engine);
+var current_asteroid = new Asteroid();
 
 var bootstrap = function() {
     setInterval(() => {
