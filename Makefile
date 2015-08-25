@@ -2,9 +2,9 @@ default: compile
 
 compile:
 	mkdir -p out
-	babel src/*.js -o out/js13kgames-2015.js
-	uglifyjs --compress --mangle -- out/js13kgames-2015.js > out/js13kgames-2015.min.js
-	rm out/js13kgames-2015.js
+	babel src/*.js -o out/js13kgames-2015.min.js
+#	uglifyjs --compress --mangle -- out/js13kgames-2015.js > out/js13kgames-2015.min.js
+#	rm out/js13kgames-2015.js
 	cp -f src/*.{html,css} out/
 
 zip: compile
@@ -16,7 +16,7 @@ stats: zip
 
 watch:
 	while true; do \
-		make stats; \
+		make compile; \
 		inotifywait -qre close_write src/.; \
 	done
 
