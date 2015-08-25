@@ -52,25 +52,37 @@ class Asteroid {
         ][Helper.random_number(0, 4)];
     }
 
-    mine_resource() {
+    mine_resource(player) {
         let resources = {
             'A': ['dust', 'dust', 'stone'],
             'C': ['dust', 'carbon', 'carbon', 'carbon'],
             'S': ['dust', 'stone', 'stone'],
             'X': ['metal']
         }[this.classification];
-        return resources[Helper.random_number(0, resources.length)];
+        let res_type = resources[Helper.random_number(0, resources.length)];
+
+
+        // TODO: gain!
     }
 }
 
 class Station {
     constructor() {
         this.inventory = [
-            'probe', // take probes from the asteroid
-            'conveyor', // mine on surface
-            'pipe-drill', // shaft mining into the asteroid
-            'magnet', // pick up loose grains with magnet, x-class asteroids only
-            'vaporizer' // melt the matrix
+            // take probes from the asteroid
+            'probe': {'A': 1, 'C': 1, 'S': 1, 'X': 1},
+
+            // mine on surface
+            'conveyor': {'A': 2, 'C': 8, 'S': 4, 'X': 1},
+
+            // shaft mining into the asteroid
+            'pipe-drill': {'A': 3, 'C': 15, 'S': 12, 'X': 2},
+
+            // pick up loose grains with magnet, x-class asteroids only
+            'magnet': {'A': 3, 'C': 1, 'S': 1, 'X': 20},
+
+            // melt the matrix
+            'vaporizer': {'A': 4, 'C': 7, 'S': 6, 'X': 5}
         ];
     }
 
