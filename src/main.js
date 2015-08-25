@@ -1,4 +1,5 @@
 // Theme: Reversed
+// https://en.wikipedia.org/wiki/Asteroid_mining
 
 class Engine {
     constructor() {
@@ -31,6 +32,7 @@ class Engine {
 class Player {
     constructor(engine) {
         this.engine = engine;
+        this.equipment = ['probe'];
     }
 
     mine() {
@@ -61,8 +63,27 @@ class Asteroid {
     }
 }
 
+class Station {
+    constructor() {
+        this.inventory = [
+            'probe', // take probes from the asteroid
+            'conveyor', // mine on surface
+            'pipe-drill', // shaft mining into the asteroid
+            'magnet', // pick up loose grains with magnet, x-class asteroids only
+            'vaporizer' // melt the matrix
+        ];
+    }
+
+    buy(player, item) {
+        if (this.inventory.indexOf(item) !== -1 &&
+            player.equipment.indexOf(item) === -1)
+            player.equipment.push(item);
+    }
+}
+
 var engine = new Engine();
 var player = new Player(engine);
+var station = new Station();
 
 var bootstrap = function() {
     setInterval(() => {
