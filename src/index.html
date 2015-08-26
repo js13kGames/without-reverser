@@ -11,13 +11,20 @@
         <li>Stone: <strong id="res-stone">0</strong></li>
         <li>Carbon: <strong id="res-carbon">0</strong></li>
         <li>Metal: <strong id="res-metal">0</strong></li>
-        <li>Time wasted on this ateroid: <strong id="time">0 hours</strong></li>
       </ul>
     </nav>
 
-    <h2>Asteroid classification: <span id="asteroid-classification"></span></h2>
+    <div id="asteroid">
+      <p>Time wasted on this ateroid: <strong id="time">0 hours</strong></p>
+      <h2>Asteroid classification: <span id="asteroid-classification"></span></h2>
+      <button id="btn-mine">Mine on this asteroid now!</button>
+      <button id="btn-to-station">Fly to station</button>
+    </div>
 
-    <button id="btn-mine">Mine on this asteroid now!</button>
+    <div id="station">
+      <h2>Docked to station</h2>
+      <button id="btn-to-asteroid">Fly to the asteroid</button>
+    </div>
 
     <script>bootstrap();</script>
   </body>
