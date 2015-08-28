@@ -2,10 +2,12 @@
   <head>
     <meta charset="utf-8">
     <title>js13kGames 2015 -- Aaron Fischer</title>
+    <script src="minified.min.js"></script>
     <script src="js13kgames-2015.min.js"></script>
   </head>
   <body>
     <nav>
+      Cargo:
       <ul>
         <li>Dust: <strong id="res-dust">0</strong></li>
         <li>Stone: <strong id="res-stone">0</strong></li>
@@ -13,6 +15,10 @@
         <li>Metal: <strong id="res-metal">0</strong></li>
       </ul>
     </nav>
+
+    <div id="ship">
+      Active tool: <strong id="active-tool">Probe</strong>
+    </div>
 
     <div id="asteroid">
       <p>Time wasted on this ateroid: <strong id="time">0 hours</strong></p>
@@ -23,9 +29,12 @@
 
     <div id="station">
       <h2>Docked to station</h2>
+
+      <ul id="station-inventory">
+        <li>
+      </ul>
+      
       <button id="btn-to-asteroid">Fly to the asteroid</button>
     </div>
-
-    <script>bootstrap();</script>
   </body>
 </html>

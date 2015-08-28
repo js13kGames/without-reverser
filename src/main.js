@@ -1,6 +1,9 @@
 // Theme: Reversed
 // https://en.wikipedia.org/wiki/Asteroid_mining
 
+let MINI = require('minified');
+let _=MINI._, $=MINI.$, $$=MINI.$$, EE=MINI.EE, HTML=MINI.HTML;
+
 class Engine {
     constructor() {
         this.ticks = 0;
@@ -16,22 +19,24 @@ class Engine {
 
     update() {
         // Resources
-        DOM.s('#res-dust').node.innerHTML = this.ship.resources.dust;
-        DOM.s('#res-stone').node.innerHTML = this.ship.resources.stone;
-        DOM.s('#res-carbon').node.innerHTML = this.ship.resources.carbon;
-        DOM.s('#res-metal').node.innerHTML = this.ship.resources.metal;
+        _.eachObj(this.ship.resources, (key, value) => {
+            $('#res-' + key).fill(value);
+        });
+
+        // The ship
+        $('#active-tool').fill(this.ship.active_tool);
 
         if (this.ship.docked_to instanceof Station) {
-            DOM.s('#asteroid').node.style.display = 'none';
-            DOM.s('#station').node.style.display = '';
+            $('#asteroid').hide();
+            $('#station').show();
         }
 
         if (this.ship.docked_to instanceof Asteroid) {
-            DOM.s('#station').node.style.display = 'none';
-            DOM.s('#asteroid').node.style.display = '';
+            $('#station').hide();
+            $('#asteroid').show();
 
-            DOM.s('#time').node.innerHTML = (this.ticks-this.current_asteroid.landed_on) + ' hours';
-            DOM.s('#asteroid-classification').node.innerHTML = this.current_asteroid.classification;
+            $('#time').fill((this.ticks-this.current_asteroid.landed_on) + ' hours');
+            $('#asteroid-classification').fill(this.current_asteroid.classification);
         }
     }
 }
@@ -39,8 +44,11 @@ class Engine {
 class Ship {
     constructor(asteroid) {
         this.docked_to = asteroid;
+        this.active_tool = 'probe';
 
-        this.equipment = ['probe'];
+        this.equipment = {
+            'probe': {'A': 1, 'C': 1, 'S': 1, 'X': 1}
+        };
         this.resources = {
             dust: 0,
             stone: 0,
@@ -49,9 +57,14 @@ class Ship {
         }
     }
 
+    mount(tool, props) {
+        this.equipment[tool] = props;
+        this.active_tool = tool;
+    }
+
     mine() {
         if (this.docked_to instanceof Asteroid) {
-            let [type, amount] = this.docked_to.harvest();
+            let [type, amount] = this.docked_to.harvest(this);
             this.resources[type] += amount;
         }
     }
@@ -78,8 +91,10 @@ class Asteroid {
             'X': ['metal']
         }[this.classification];
         let res_type = resources[Helper.random_number(0, resources.length)];
-        // TODO: amount
-        return [res_type, 1];
+        let amount = ship.equipment[ship.active_tool][this.classification];
+        
+        console.log(amount);
+        return [res_type, amount];
     }
 }
 
@@ -103,37 +118,46 @@ class Station {
         };
     }
 
-    buy(ship, item) {
-        if (this.inventory.indexOf(item) !== -1 &&
-            ship.equipment.indexOf(item) === -1)
-            ship.equipment.push(item);
+    sell(ship, tool) {
+        if (_.keys(this.inventory).contains(tool) &&
+            !_.keys(ship.equipment).contains(tool))
+            ship.mount(tool, this.inventory[tool]);
     }
 }
 
 var engine = new Engine();
 
-var bootstrap = function() {
+$(() => {
     setInterval(() => {
         engine.tick();
         engine.update();
     }, 1000);
 
-    DOM.s('#btn-mine').node.onclick = () => {
+    $('#btn-mine').onClick(() => {
         engine.ship.mine();
         engine.update();
-    };
+    });
 
-    DOM.s('#btn-to-station').node.onclick = () => {
+    $('#btn-to-station').onClick(() => {
         engine.ship.docked_to = engine.station;
         engine.current_asteroid = null;
         engine.update();
-    }
+    });
 
-    DOM.s('#btn-to-asteroid').node.onclick = () => {
+    $('#btn-to-asteroid').onClick(() => {
         engine.ship.docked_to = engine.asteroids[0];
         engine.current_asteroid = engine.asteroids[0];
         engine.current_asteroid.landed_on = engine.ticks;
         engine.update();
-    }
+    });
+
+    _.eachObj(engine.station.inventory, (tool, props) => {
+        let buy_button = EE('a', {'@href': '#', '%tool': tool}, 'buy').onClick((e) => {
+            let tool = $(e.target).get('%tool');
+            engine.station.sell(engine.ship, tool);
+        })
+        $('#station-inventory').add(EE('li', tool+' ').add(buy_button));
+    });
+    
     engine.update();
-};
+})
