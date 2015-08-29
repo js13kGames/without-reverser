@@ -26,6 +26,18 @@ class Engine {
         // The ship
         $('#active-tool').fill(this.ship.active_tool);
 
+        if (_.keys(engine.ship.equipment).length > $('#ship-equipment > li').length) {
+            $('#ship-equipment').fill();
+            _.eachObj(engine.ship.equipment, (tool, props) => {
+                // Add the tool to the DOM inventory and add a mount button
+                let mount_button = EE('a', {'@href': '#', '%tool': tool}, 'mount').onClick((e) => {
+                    engine.ship.active_tool = tool;
+                    engine.update();
+                });
+                $('#ship-equipment').add(EE('li', tool+' ').add(mount_button));
+            });
+        }
+
         if (this.ship.docked_to instanceof Station) {
             $('#asteroid').hide();
             $('#station').show();
@@ -57,9 +69,12 @@ class Ship {
         }
     }
 
-    mount(tool, props) {
-        this.equipment[tool] = props;
+    mount(tool) {
         this.active_tool = tool;
+    }
+
+    equip(tool, props) {
+        this.equipment[tool] = props;
     }
 
     mine() {
@@ -92,8 +107,6 @@ class Asteroid {
         }[this.classification];
         let res_type = resources[Helper.random_number(0, resources.length)];
         let amount = ship.equipment[ship.active_tool][this.classification];
-        
-        console.log(amount);
         return [res_type, amount];
     }
 }
@@ -121,7 +134,7 @@ class Station {
     sell(ship, tool) {
         if (_.keys(this.inventory).contains(tool) &&
             !_.keys(ship.equipment).contains(tool))
-            ship.mount(tool, this.inventory[tool]);
+            ship.equip(tool, this.inventory[tool]);
     }
 }
 
@@ -155,6 +168,7 @@ $(() => {
         let buy_button = EE('a', {'@href': '#', '%tool': tool}, 'buy').onClick((e) => {
             let tool = $(e.target).get('%tool');
             engine.station.sell(engine.ship, tool);
+            engine.update();
         })
         $('#station-inventory').add(EE('li', tool+' ').add(buy_button));
     });
