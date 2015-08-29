@@ -9,7 +9,7 @@ class Engine {
         this.ticks = 0;
         this.current_asteroid = new Asteroid();
         this.station = new Station();
-        this.ship = new Ship(this.current_asteroid);
+        this.ship = new Ship(this.current_asteroid, this.station);
         this.asteroids = [this.current_asteroid];
     }
 
@@ -22,13 +22,14 @@ class Engine {
         _.eachObj(this.ship.resources, (key, value) => {
             $('nav .res-' + key).fill(value);
         });
+        $('nav .cbtc').fill(this.ship.cbtc);
 
         // The ship
         $('#active-tool').fill(this.ship.active_tool);
 
         if (_.keys(engine.ship.equipment).length > $('#ship-equipment > li').length) {
             $('#ship-equipment').fill();
-            _.eachObj(engine.ship.equipment, (tool, props) => {
+            _.eachObj(engine.ship.equipment, (tool) => {
                 // Add the tool to the DOM inventory and add a mount button
                 let mount_button = EE('a', {'@href': '#', '%tool': tool}, 'mount').onClick((e) => {
                     engine.ship.active_tool = tool;
@@ -58,12 +59,12 @@ class Engine {
 }
 
 class Ship {
-    constructor(asteroid) {
+    constructor(asteroid, station) {
         this.docked_to = asteroid;
         this.active_tool = 'probe';
 
         this.equipment = {
-            'probe': {'A': 1, 'C': 1, 'S': 1, 'X': 1}
+            'probe': station.inventory['probe']
         };
         this.resources = {
             dust: 0,
@@ -71,6 +72,7 @@ class Ship {
             carbon: 0,
             metal: 0
         }
+        this.cbtc = 450;
     }
 
     mount(tool) {
@@ -110,7 +112,7 @@ class Asteroid {
             'X': ['metal']
         }[this.classification];
         let res_type = resources[Helper.random_number(0, resources.length)];
-        let amount = ship.equipment[ship.active_tool][this.classification];
+        let amount = ship.equipment[ship.active_tool]['capability'][this.classification];
         return [res_type, amount];
     }
 }
@@ -119,31 +121,70 @@ class Station {
     constructor() {
         this.inventory = {
             // take probes from the asteroid
-            'probe': {'A': 1, 'C': 1, 'S': 1, 'X': 1},
+            'probe': {
+                'price': 10,
+                'capability': {'A': 1, 'C': 1, 'S': 1, 'X': 1}
+            },
 
             // mine on surface
-            'conveyor': {'A': 2, 'C': 8, 'S': 4, 'X': 1},
+            'conveyor': {
+                'price': 500,
+                'capability': {'A': 2, 'C': 8, 'S': 4, 'X': 1}
+            },
 
             // shaft mining into the asteroid
-            'pipe-drill': {'A': 3, 'C': 15, 'S': 12, 'X': 2},
+            'pipe-drill': {
+                'price': 3000,
+                'capability': {'A': 3, 'C': 15, 'S': 12, 'X': 2}
+            },
 
             // pick up loose grains with magnet, x-class asteroids only
-            'magnet': {'A': 3, 'C': 1, 'S': 1, 'X': 20},
+            'magnet': {
+                'price': 4500,
+                'capability': {'A': 3, 'C': 1, 'S': 1, 'X': 20}
+            },
 
             // melt the matrix
-            'vaporizer': {'A': 4, 'C': 7, 'S': 6, 'X': 5}
+            'vaporizer': {
+                'price': 4000,
+                'capability': {'A': 4, 'C': 7, 'S': 6, 'X': 5}
+            }
+        };
+        this.market = {
+            'dust': 1,
+            'stone': 3,
+            'carbon': 20,
+            'metal': 45
         };
     }
 
     sell(ship, tool) {
-        if (_.keys(this.inventory).contains(tool) &&
-            !_.keys(ship.equipment).contains(tool))
-            ship.equip(tool, this.inventory[tool]);
+        // Tools can't be buy several times
+        if (!_.keys(this.inventory).contains(tool) ||
+            _.keys(ship.equipment).contains(tool)) {
+            alert('You already own this tool.');
+            return;
+        }
+
+        let price = this.inventory[tool].price;
+        if (price > ship.cbtc) {
+            alert('You have not enough cBTC!');
+            return;
+        }
+
+        ship.equip(tool, this.inventory[tool]);
+        ship.cbtc -= price;
     }
 
     buy(ship, resource, amount) {
-        // TODO: Check if the ship has enough resources loaded
-        console.log(ship, resource, amount);
+        if (ship.resources[resource] < amount) {
+            alert('You have not enough resources loaded');
+            return;
+        }
+
+        let price = this.market[resource];
+        ship.cbtc += price*amount;
+        ship.resources[resource] -= amount;
     }
 }
 
@@ -174,12 +215,12 @@ $(() => {
     });
 
     _.eachObj(engine.station.inventory, (tool, props) => {
-        let buy_button = EE('a', {'@href': '#', '%tool': tool}, 'buy').onClick((e) => {
+        let buy_button = EE('a', {'@href': '#', '%tool': tool}, ' buy for '+props.price+' cBTC').onClick((e) => {
             let tool = $(e.target).get('%tool');
             engine.station.sell(engine.ship, tool);
             engine.update();
         })
-        $('#station-inventory').add(EE('li', tool+' ').add(buy_button));
+        $('#station-inventory').add(EE('li', tool).add(buy_button));
     });
 
     $('#ship-inventory a').onClick((e) => {
