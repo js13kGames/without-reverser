@@ -20,7 +20,7 @@ class Engine {
     update() {
         // Resources
         _.eachObj(this.ship.resources, (key, value) => {
-            $('#res-' + key).fill(value);
+            $('nav .res-' + key).fill(value);
         });
 
         // The ship
@@ -41,6 +41,10 @@ class Engine {
         if (this.ship.docked_to instanceof Station) {
             $('#asteroid').hide();
             $('#station').show();
+
+            _.eachObj(this.ship.resources, (key, value) => {
+                $('#ship-inventory .res-' + key).set('@value', value);
+            });
         }
 
         if (this.ship.docked_to instanceof Asteroid) {
@@ -136,6 +140,11 @@ class Station {
             !_.keys(ship.equipment).contains(tool))
             ship.equip(tool, this.inventory[tool]);
     }
+
+    buy(ship, resource, amount) {
+        // TODO: Check if the ship has enough resources loaded
+        console.log(ship, resource, amount);
+    }
 }
 
 var engine = new Engine();
@@ -171,6 +180,14 @@ $(() => {
             engine.update();
         })
         $('#station-inventory').add(EE('li', tool+' ').add(buy_button));
+    });
+
+    $('#ship-inventory a').onClick((e) => {
+        let res = $(e.target).get('%res');
+        
+        let amount = $('#ship-inventory input[name="sell-res-'+res+'"]').get('value');
+        engine.station.buy(engine.ship, res, amount);
+        engine.update();
     });
     
     engine.update();

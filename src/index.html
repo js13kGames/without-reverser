@@ -9,10 +9,10 @@
     <nav>
       Cargo:
       <ul>
-        <li>Dust: <strong id="res-dust">0</strong></li>
-        <li>Stone: <strong id="res-stone">0</strong></li>
-        <li>Carbon: <strong id="res-carbon">0</strong></li>
-        <li>Metal: <strong id="res-metal">0</strong></li>
+        <li>Dust: <strong class="res-dust">0</strong></li>
+        <li>Stone: <strong class="res-stone">0</strong></li>
+        <li>Carbon: <strong class="res-carbon">0</strong></li>
+        <li>Metal: <strong class="res-metal">0</strong></li>
       </ul>
     </nav>
 
@@ -34,6 +34,14 @@
 
       Buy:
       <ul id="station-inventory"></ul>
+
+      Sell:
+      <ul id="ship-inventory">
+        <li>Dust: <input type="text" class="res-dust" name="sell-res-dust"> <a href="#" data-res="dust">sell</a></li>
+        <li>Stone: <input type="text" class="res-stone" name="sell-res-stone"> <a href="#" data-res="stone">sell</a></li>
+        <li>Carbon: <input type="text" class="res-carbon" name="sell-res-carbon"> <a href="#" data-res="carbon">sell</a></li>
+        <li>Metal: <input type="text" class="res-metal" name="sell-res-metal"> <a href="#" data-res="metal">sell</a></li>
+      </ul>
       
       <button id="btn-to-asteroid">Fly to the asteroid</button>
     </div>
