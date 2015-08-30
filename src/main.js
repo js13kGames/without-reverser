@@ -42,10 +42,6 @@ class Engine {
         if (this.ship.docked_to instanceof Station) {
             $('#asteroid').hide();
             $('#station').show();
-
-            _.eachObj(this.ship.resources, (key, value) => {
-                $('#ship-inventory .res-' + key).set('@value', value);
-            });
         }
 
         if (this.ship.docked_to instanceof Asteroid) {
@@ -66,12 +62,15 @@ class Ship {
         this.equipment = {
             'probe': station.inventory['probe']
         };
+        this.upgrades = {
+            
+        };
         this.resources = {
             dust: 0,
             stone: 0,
             carbon: 0,
             metal: 0
-        }
+        };
         this.cbtc = 450;
     }
 
@@ -159,7 +158,7 @@ class Station {
     }
 
     sell(ship, tool) {
-        // Tools can't be buy several times
+        // Tools can't be buy multiple times
         if (!_.keys(this.inventory).contains(tool) ||
             _.keys(ship.equipment).contains(tool)) {
             alert('You already own this tool.');
@@ -177,7 +176,7 @@ class Station {
     }
 
     buy(ship, resource, amount) {
-        if (ship.resources[resource] < amount) {
+        if (ship.resources[resource] < amount || amount < 0) {
             alert('You have not enough resources loaded');
             return;
         }
@@ -204,6 +203,13 @@ $(() => {
     $('#btn-to-station').onClick(() => {
         engine.ship.docked_to = engine.station;
         engine.current_asteroid = null;
+
+        // Update the resources to sell. If the ship is docket to a station,
+        // the resources do not change because we can't mine.
+        _.eachObj(engine.ship.resources, (key, value) => {
+            $('#ship-inventory .res-' + key).set('value', value);
+        });
+
         engine.update();
     });
 
