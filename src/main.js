@@ -27,15 +27,37 @@ class Engine {
         // The ship
         $('#active-tool').fill(this.ship.active_tool);
 
-        if (_.keys(engine.ship.equipment).length > $('#ship-equipment > li').length) {
+        if (_.keys(engine.ship.equipment).length != $('#ship-equipment > li').length) {
             $('#ship-equipment').fill();
-            _.eachObj(engine.ship.equipment, (tool) => {
-                // Add the tool to the DOM inventory and add a mount button
-                let mount_button = EE('a', {'@href': '#', '%tool': tool}, 'mount').onClick((e) => {
-                    engine.ship.active_tool = tool;
-                    engine.update();
-                });
-                $('#ship-equipment').add(EE('li', tool+' ').add(mount_button));
+            _.eachObj(engine.ship.equipment, (item) => {
+                // Skip if it is not a tool to mount
+                let type = this.ship.equipment[item]['type'];
+
+                // Tools can mount on the ship
+                if (type == 'tool') {
+                    // Add the tool to the DOM inventory and add a mount button
+                    let mount_button = EE('a', {'@href': '#', '%tool': item}, 'mount').onClick((e) => {
+                        engine.ship.active_tool = item;
+                        engine.update();
+                    });
+                    $('#ship-equipment').add(EE('li', item+' ').add(mount_button));
+                }
+
+                // Bots can deploy on an asteroid
+                if (type == 'bot') {
+                    let deploy_button = EE('a', {'@href': '#'}, 'deploy').onClick((e) => {
+                        // This only works on asteroids
+                        if (engine.ship.docked_to instanceof Asteroid) {
+                            let bot = new Bot(item, engine.ship.equipment[item]['capability']);
+                            engine.ship.docked_to.deploy_bot(bot);
+                            delete engine.ship.equipment[item];
+                            engine.update();
+                        } else {
+                            alert('You need to land on an asteroid first.');
+                        }
+                    });
+                    $('#ship-equipment').add(EE('li', item+' ').add(deploy_button));
+                }
             });
         }
 
@@ -50,6 +72,15 @@ class Engine {
 
             $('#time').fill((this.ticks-this.current_asteroid.landed_on) + ' hours');
             $('#asteroid-classification').fill(this.current_asteroid.classification);
+
+            $('#bots').fill();
+            _.eachObj(this.current_asteroid.bots, (i, bot) => {
+                let destroy_button = EE('a', {'@href': '#'}, 'destroy').onClick((e) => {
+                    bot.docked_to.bots.splice(i, 1);
+                    engine.update();
+                });
+                $('#bots').add(EE('li', bot.model+' ').add(destroy_button));
+            });
         }
     }
 }
@@ -84,8 +115,29 @@ class Ship {
 
     mine() {
         if (this.docked_to instanceof Asteroid) {
-            let [type, amount] = this.docked_to.harvest(this);
+            let [type, amount] = this.docked_to.harvest(this.equipment[this.active_tool]);
             this.resources[type] += amount;
+        }
+    }
+}
+
+class Bot {
+    constructor(model) {
+        this.model = model;
+        this.tool = {'name': 'probe', 'capability': engine.station.inventory['probe'] };
+        this.docked_to = false;
+    }
+
+    // TODO: Build a gui for this
+    mount(tool, props) {
+        this.tool = {'name': tool, 'capability': props};
+    }
+
+    mine() {
+        if (this.docked_to instanceof Asteroid &&
+            engine.ship.docked_to == this.docked_to) {
+            let [type, amount] = this.docked_to.harvest(this.tool['capability']);
+            engine.ship.resources[type] += amount;
         }
     }
 }
@@ -93,6 +145,7 @@ class Ship {
 class Asteroid {
     constructor() {
         this.landed_on = 0;
+        this.bots = [];
 
         // Determine the class
         this.classification = [
@@ -103,7 +156,7 @@ class Asteroid {
         ][Helper.random_number(0, 4)];
     }
 
-    harvest(ship) {
+    harvest(tool) {
         let resources = {
             'A': ['dust', 'dust', 'stone'],
             'C': ['dust', 'carbon', 'carbon', 'carbon'],
@@ -111,8 +164,13 @@ class Asteroid {
             'X': ['metal']
         }[this.classification];
         let res_type = resources[Helper.random_number(0, resources.length)];
-        let amount = ship.equipment[ship.active_tool]['capability'][this.classification];
+        let amount = tool['capability'][this.classification];
         return [res_type, amount];
+    }
+
+    deploy_bot(bot) {
+        bot.docked_to = this;
+        this.bots.push(bot);
     }
 }
 
@@ -122,32 +180,44 @@ class Station {
             // take probes from the asteroid
             'probe': {
                 'price': 10,
+                'type': 'tool',
                 'capability': {'A': 1, 'C': 1, 'S': 1, 'X': 1}
             },
 
             // mine on surface
             'conveyor': {
                 'price': 500,
+                'type': 'tool',
                 'capability': {'A': 2, 'C': 8, 'S': 4, 'X': 1}
             },
 
             // shaft mining into the asteroid
             'pipe-drill': {
                 'price': 3000,
+                'type': 'tool',
                 'capability': {'A': 3, 'C': 15, 'S': 12, 'X': 2}
             },
 
             // pick up loose grains with magnet, x-class asteroids only
             'magnet': {
                 'price': 4500,
+                'type': 'tool',
                 'capability': {'A': 3, 'C': 1, 'S': 1, 'X': 20}
             },
 
             // melt the matrix
             'vaporizer': {
                 'price': 4000,
+                'type': 'tool',
                 'capability': {'A': 4, 'C': 7, 'S': 6, 'X': 5}
+            },
+
+            'mining-bot': {
+                'price': 20000,
+                'type': 'bot',
+                'capability': {'A': 8, 'C': 8, 'S': 8, 'X': 8}
             }
+
         };
         this.market = {
             'dust': 1,
@@ -192,6 +262,11 @@ var engine = new Engine();
 $(() => {
     setInterval(() => {
         engine.tick();
+        _.each(engine.asteroids, (asteroid) => {
+            _.each(asteroid.bots, (bot) => {
+                bot.mine();
+            })
+        });
         engine.update();
     }, 1000);
 
