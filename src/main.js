@@ -22,13 +22,13 @@ class Engine {
     update() {
         // Endgame?
         if (!this.game_running) {
-            $('#ship, #asteroid, #station, #startgame').hide();
+            $('#ship, #asteroid, #station, #startgame, nav').hide();
             $('#endgame').show();
             return;
         }
 
         if (this.init_sequence_run) {
-            $('#ship, #asteroid, #station, #endgame').hide();
+            $('#ship, #asteroid, #station, #endgame, nav').hide();
             $('#startgame').show();
             return;
         }
@@ -117,7 +117,7 @@ class Ship {
             carbon: 0,
             metal: 0
         };
-        this.cbtc = 999999999; //450;
+        this.cbtc = 430;
     }
 
     mount(tool) {
@@ -333,7 +333,7 @@ $(() => {
 
     $('#startgame button').onClick((e) => {
         $('#startgame').hide();
-        $('#ship').show();
+        $('#ship, nav').show();
 
         engine.init_sequence_run = false;
         engine.update();

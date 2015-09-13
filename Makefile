@@ -4,7 +4,8 @@ compile:
 	mkdir -p out
 	babel src/*.js -o out/js13kgames-2015.js
 	uglifyjs --compress --mangle -- out/js13kgames-2015.js > out/js13kgames-2015.min.js
-	cp vendor/minified.js out/minified.min.js # ca. 8kb space wasted ...
+	cp vendor/minified-custom.js out/minified.min.js # ca. 8kb space wasted ...
+	cp vendor/asteroid-icon.png out/asteroid.png
 	cp -f src/*.{html,css} out/
 	rm out/js13kgames-2015.js
 
