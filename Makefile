@@ -8,6 +8,9 @@ compile:
 	cp -f src/*.{html,css} out/
 	rm out/js13kgames-2015.js
 
+optimize:
+	#closure --compilation_level ADVANCED_OPTIMIZATIONS --language_in ECMASCRIPT6 --language_out ECMASCRIPT5 --js src/main.js --js src/helpers.js --js vendor/minified-src.js --warnings_whitelist_file vendor/minified-src.js --js_output_file out.min.js 
+
 zip: compile
 	rm -f js13kgames2015-aaronfischer.zip
 	zip -9 -r js13kgames-2015-aaronfischer.zip out/*

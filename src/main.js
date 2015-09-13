@@ -11,6 +11,8 @@ class Engine {
         this.station = new Station();
         this.ship = new Ship(this.current_asteroid, this.station);
         this.asteroids = [this.current_asteroid];
+        this.game_running = true;
+        this.init_sequence_run = true;
     }
 
     tick() {
@@ -18,6 +20,19 @@ class Engine {
     }
 
     update() {
+        // Endgame?
+        if (!this.game_running) {
+            $('#ship, #asteroid, #station, #startgame').hide();
+            $('#endgame').show();
+            return;
+        }
+
+        if (this.init_sequence_run) {
+            $('#ship, #asteroid, #station, #endgame').hide();
+            $('#startgame').show();
+            return;
+        }
+
         // Resources
         _.eachObj(this.ship.resources, (key, value) => {
             $('nav .res-' + key).fill(value);
@@ -102,7 +117,7 @@ class Ship {
             carbon: 0,
             metal: 0
         };
-        this.cbtc = 450;
+        this.cbtc = 999999999; //450;
     }
 
     mount(tool) {
@@ -216,8 +231,13 @@ class Station {
                 'price': 20000,
                 'type': 'bot',
                 'capability': {'A': 8, 'C': 8, 'S': 8, 'X': 8}
-            }
+            },
 
+            'reverser': {
+                'price': 90000,
+                'type': 'part',
+                'capability': {}
+            }
         };
         this.market = {
             'dust': 1,
@@ -241,6 +261,11 @@ class Station {
             return;
         }
 
+        // Endgame?
+        if (tool == 'reverser')
+            engine.game_running = false;
+
+
         ship.equip(tool, this.inventory[tool]);
         ship.cbtc -= price;
     }
@@ -260,16 +285,6 @@ class Station {
 var engine = new Engine();
 
 $(() => {
-    setInterval(() => {
-        engine.tick();
-        _.each(engine.asteroids, (asteroid) => {
-            _.each(asteroid.bots, (bot) => {
-                bot.mine();
-            })
-        });
-        engine.update();
-    }, 1000);
-
     $('#btn-mine').onClick(() => {
         engine.ship.mine();
         engine.update();
@@ -279,7 +294,7 @@ $(() => {
         engine.ship.docked_to = engine.station;
         engine.current_asteroid = null;
 
-        // Update the resources to sell. If the ship is docket to a station,
+        // Update the resources to sell. If the ship is docked to a station,
         // the resources do not change because we can't mine.
         _.eachObj(engine.ship.resources, (key, value) => {
             $('#ship-inventory .res-' + key).set('value', value);
@@ -307,9 +322,32 @@ $(() => {
     $('#ship-inventory a').onClick((e) => {
         let res = $(e.target).get('%res');
         
-        let amount = $('#ship-inventory input[name="sell-res-'+res+'"]').get('value');
+        let input = $('#ship-inventory input[name="sell-res-'+res+'"]');
+        let amount = input.get('value');
+        let rest = engine.ship.resources[res] - amount;
+        if (rest < 0) rest = engine.ship.resources[res];
+        input.set('value', rest);
         engine.station.buy(engine.ship, res, amount);
         engine.update();
+    });
+
+    $('#startgame button').onClick((e) => {
+        $('#startgame').hide();
+        $('#ship').show();
+
+        engine.init_sequence_run = false;
+        engine.update();
+
+        setInterval(() => {
+            engine.tick();
+            _.each(engine.asteroids, (asteroid) => {
+                _.each(asteroid.bots, (bot) => {
+                    bot.mine();
+                })
+                    });
+            engine.update();
+        }, 1000);
+
     });
     
     engine.update();
